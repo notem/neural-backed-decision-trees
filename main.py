@@ -24,7 +24,7 @@ from nbdt.tree import Tree
 
 def main():
     maybe_install_wordnet()
-    datasets = data.cifar.names + data.imagenet.names + data.custom.names
+    datasets = data.cifar.names + data.imagenet.names + data.custom.names + data.wf.names
     parser = argparse.ArgumentParser(description="PyTorch CIFAR Training")
     parser.add_argument(
         "--batch-size", default=512, type=int, help="Batch size used for training"
@@ -154,6 +154,7 @@ def main():
         model = make_kwarg_optional(model, dataset=args.dataset)
         net = model(pretrained=True, num_classes=len(trainset.classes))
     else:
+        model = make_kwarg_optional(model, dataset=args.dataset)
         net = model(num_classes=len(trainset.classes))
 
     net = net.to(device)

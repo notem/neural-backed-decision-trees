@@ -27,6 +27,11 @@ DATASETS = (
     "PascalContext",
     "LookIntoPerson",
     "ADE20K",
+    "WFUndefended",
+    "WFSpring",
+    "WFUndefendedOW",
+    "WFSpringOW",
+    "WFSubpages24",
 )
 DATASET_TO_NUM_CLASSES = {
     "CIFAR10": 10,
@@ -37,6 +42,11 @@ DATASET_TO_NUM_CLASSES = {
     "PascalContext": 59,
     "LookIntoPerson": 20,
     "ADE20K": 150,
+    "WFUndefended": 50,
+    "WFSpring": 50,
+    "WFUndefendedOW": 51,
+    "WFSpringOW": 51,
+    "WFSubpages24": 24,
 }
 DATASET_TO_CLASSES = {
     "CIFAR10": [

@@ -1,5 +1,6 @@
 from .resnet import *
 from .wideresnet import *
+from .df import __all__, DFNet
 from pytorchcv.models.efficientnet import *
 from torchvision.models import *
 

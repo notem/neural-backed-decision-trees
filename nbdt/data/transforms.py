@@ -13,3 +13,14 @@ class InverseNormalize:
         self.mean = self.mean.to(device)
         self.std = self.std.to(device)
         return self
+
+
+class InverseNormalizeNone:
+    def __init__(self):
+        pass
+
+    def __call__(self, sample):
+        return sample
+
+    def to(self, device):
+        return self
