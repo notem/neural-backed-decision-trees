@@ -48,11 +48,10 @@ def synset_to_wnid(synset):
 def wnid_to_synset(wnid):
     from nltk.corpus import wordnet as wn  # entire script should not depend on wn
 
-    offset = int(wnid[1:])
-    pos = wnid[0]
-
     try:
-        return wn.synset_from_pos_and_offset(wnid[0], offset)
+        offset = int(wnid[1:])
+        pos = wnid[0]
+        return wn.synset_from_pos_and_offset(pos, offset)
     except:
         return FakeSynset(wnid)
 
@@ -64,6 +63,9 @@ def wnid_to_name(wnid):
 def synset_to_name(synset):
     return synset.name().split(".")[0]
 
+
+def makeparentdirs(path):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
 
 def write_wnids(wnids, path):
     makeparentdirs(path)

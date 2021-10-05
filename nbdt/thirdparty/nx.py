@@ -63,7 +63,9 @@ def get_leaf_to_path(G):
 def write_graph(G, path):
     makeparentdirs(path)
     with open(str(path), "w") as f:
-        json.dump(node_link_data(G), f)
+        s = node_link_data(G)
+        print(s)
+        json.dump(s, f)
 
 
 def read_graph(path):

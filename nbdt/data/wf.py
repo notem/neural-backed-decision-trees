@@ -5,6 +5,7 @@ from torch.utils import data
 import torchvision.transforms as transforms
 from . import transforms as transforms_custom
 import numpy as np
+import pickle as pkl
 
 
 __all__ = names = ("WFUndefended", "WFUndefendedOW", "WFSpring", "WFSpringOW", "WFSubpages24")
@@ -27,12 +28,12 @@ class Pylls(data.Dataset):
         if train:
             dataset, labels, classes, ids = load_dataset(
                     join(root, 'mon'), join(root, 'unmon'), join(root, 'classes.list'), 
-                    samples = list(range(0,18)), unm_partition = 0,
+                    samples = list(range(0,18)), unm_partition = 0, mode='tr',
                     **kwargs)
         else:
             dataset, labels, classes, ids = load_dataset(
                     join(root, 'mon'), join(root, 'unmon'), join(root, 'classes.list'), 
-                    samples = list(range(18,20)), unm_partition = 9000,
+                    samples = list(range(18,20)), unm_partition = 9000, mode='te',
                     **kwargs)
         self.classes = classes
         self.ids = ids
@@ -143,6 +144,7 @@ def load_dataset(
     subpage_as_label = False,
     include_unm = False,
     defen_multiples = 0,
+    mode = 'tr',
     **kwargs
     ):
     ''' Loads the dataset from disk into two dictionaries for data and labels.
@@ -156,32 +158,30 @@ def load_dataset(
     labels = {}
     IDs = []
 
+
     with open(classes_path) as fi:
         if subpage_as_label:
             class_names = ['{line}-{i}' for i in range(partitions) for line in fi]
         else:
             class_names = [line for line in fi]
+    if include_unm:
+        class_names.append('unmonitored')
+
 
     # load monitored data
-    for c in range(0,classes):
-        for p in range(0,subpages):
-            site = c*subpages + p
-            for s in samples:
-                if defen_multiples <= 0:
-                    ID = f"m-{c}-{p}-{s}"
-                    if subpage_as_label:
-                        labels[ID] = site
-                    else:
-                        labels[ID] = c
-                    IDs.append(ID)
-
-                    # file format is {site}-{sample}.trace
-                    fname = f"{site}-{s}"
-                    with open(join(mon_dir, fname), "r") as f:
-                        data[ID] = process(load_trace(f), length)
-                else:
-                    for m in range(defen_multiples):
-                        ID = f"m-{c}-{p}-{s}-{m}"
+    mon_data_pkl = os.path.join(os.path.dirname(mon_dir), f'mon-data-{mode}.pkl')
+    unm_data_pkl = os.path.join(os.path.dirname(unm_dir), f'unm-data-{mode}.pkl')
+    if os.path.exists(mon_data_pkl):
+        with open(mon_data_pkl, 'rb') as fi:
+            data, labels, IDs = pkl.load(fi)
+    else:
+        for c in range(0,classes):
+            for p in range(0,subpages):
+                site = c*subpages + p
+                for i,s in enumerate(samples):
+                    print(f'{(site*len(samples))+i}/{classes*subpages*len(samples)}',end='\r',flush=True)
+                    if defen_multiples <= 0:
+                        ID = f"m-{c}-{p}-{s}"
                         if subpage_as_label:
                             labels[ID] = site
                         else:
@@ -189,22 +189,56 @@ def load_dataset(
                         IDs.append(ID)
 
                         # file format is {site}-{sample}.trace
-                        fname = f"{site}-{s}-{m}"
+                        fname = f"{site}-{s}"
                         with open(join(mon_dir, fname), "r") as f:
                             data[ID] = process(load_trace(f), length)
+                    else:
+                        for m in range(defen_multiples):
+                            ID = f"m-{c}-{p}-{s}-{m}"
+                            if subpage_as_label:
+                                labels[ID] = site
+                            else:
+                                labels[ID] = c
+                            IDs.append(ID)
 
+                            # file format is {site}-{sample}.trace
+                            fname = f"{site}-{s}-{m}"
+                            with open(join(mon_dir, fname), "r") as f:
+                                data[ID] = process(load_trace(f), length)
 
-    if include_unm:
-        # load unmonitored data
-        dirlist = sorted(os.listdir(unm_dir))
-        # make sure we only load a balanced dataset
-        dirlist = dirlist[unm_partition:len(data)]
-        for fname in dirlist:
-            ID = f"u-{fname}"
-            labels[ID] = classes # start from 0 for monitored
-            with open(os.path.join(unm_dir, fname), "r") as f:
-                data[ID] = process(load_trace(f), length)
-        class_names.append('unmonitored')
+        with open(mon_data_pkl, 'wb') as fi:
+            pkl.dump((data, labels, IDs), fi)
+
+    if os.path.exists(unm_data_pkl) and include_unm:
+        with open(unm_data_pkl, 'rb') as fi:
+            data, labels, IDs = pkl.load(fi)
+    else:
+        if include_unm:
+            # load unmonitored data
+            dirlist = sorted(os.listdir(unm_dir))
+            if defen_multiples > 0:
+                # filter filenames to only include base instances
+                dirlist = [fname for fname in dirlist if '-0' in fname]
+            # make sure we only load a balanced dataset
+            s = classes*subpages*len(samples)
+            dirlist = dirlist[unm_partition:unm_partition+s]
+            for i,fname in enumerate(dirlist):
+                print(f'{i}/{len(dirlist)}',end='\r',flush=True)
+                if defen_multiples <= 0:
+                    ID = f"u-{fname}"
+                    labels[ID] = classes # start from 0 for monitored
+                    with open(os.path.join(unm_dir, fname), "r") as f:
+                        data[ID] = process(load_trace(f), length)
+                else:
+                    inst = fname.replace('-0',"")
+                    for m in range(defen_multiples):
+                        ID = f"u-{inst}-{m}"
+                        labels[ID] = classes # start from 0 for monitored
+                        with open(os.path.join(unm_dir, f"{inst}-{m}"), "r") as f:
+                            data[ID] = process(load_trace(f), length)
+
+            with open(unm_data_pkl, 'wb') as fi:
+                pkl.dump((data, labels, IDs), fi)
 
     return data, labels, class_names, IDs
 

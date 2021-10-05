@@ -25,7 +25,7 @@ from nbdt.thirdparty.wn import (
     wnid_to_synset,
     synset_to_name,
 )
-from nbdt.thirdparty.nx import get_roots
+from nbdt.thirdparty.nx import get_roots, get_root
 from nbdt.utils import get_directory
 
 
@@ -378,6 +378,56 @@ def build_random_graph(wnids, seed=0, branching_factor=2):
     return G
 
 
+def build_semirandom_graph(groups, seed=0, branching_factor=2):
+    random.seed(seed)
+    if seed >= 0:
+        random.shuffle(groups)
+
+    remaining = groups
+
+    # Build the graph from the leaves up
+    while len(remaining) > 1:
+        current, remaining = remaining, []
+        while current:
+            nodes, current = current[:branching_factor], current[branching_factor:]
+            remaining.append(nodes)
+
+    G = nx.DiGraph()
+
+    # Construct networkx graph from root down
+    G.add_node("0")
+    set_random_node_label(G, "0")
+    next = [(remaining[0], "0")]
+    i = 1
+    while next:
+        group, parent = next.pop(0)
+        if len(group) == 1:
+            if isinstance(group[0], str):
+                G.add_node(group[0])
+                synset = wnid_to_synset(group[0])
+                set_node_label(G, synset)
+                G.add_edge(parent, group[0])
+            else:
+                next.append((group[0], parent))
+            continue
+
+        for candidate in group:
+            is_leaf = not isinstance(candidate, list)
+            wnid = candidate if is_leaf else str(i)
+            G.add_node(wnid)
+            if is_leaf:
+                synset = wnid_to_synset(wnid)
+                set_node_label(G, synset)
+            else:
+                set_random_node_label(G, wnid)
+            G.add_edge(parent, wnid)
+            i += 1
+
+            if not is_leaf:
+                next.append((candidate, wnid))
+    return G
+
+
 ################
 # INDUCED TREE #
 ################
@@ -394,6 +444,7 @@ MODEL_FC_KEYS = (
     "module.output.fc.weight",
     "classifier.weight",
     "model.last_layer.3.weight",
+    "prediction.0.weight"
 )
 
 
@@ -561,7 +612,7 @@ def get_new_node(G):
     """Get new candidate node for the graph"""
     root = get_root(G)
     nodes = list(
-        filter(lambda node: node is not root and not node.startswith("f"), G.nodes)
+        filter(lambda node: node is not root, G.nodes)
     )
 
     children = get_new_adjacency(G, nodes)

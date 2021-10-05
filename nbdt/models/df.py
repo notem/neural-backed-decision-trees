@@ -31,6 +31,10 @@ model_urls = {
     ): 'https://github.com/notem/nbdt-temp/blob/main/ckpt-Spring-DFNet.pth',
     (
         "DFNet",
+        "WFSpringOW",
+    ): 'https://github.com/notem/nbdt-temp/blob/main/ckpt-WFSpringOW-DFNet.pth',
+    (
+        "DFNet",
         "WFSubpages24",
     ): 'https://github.com/notem/nbdt-temp/blob/main/ckpt-Spring-DFNet.pth',
 }
