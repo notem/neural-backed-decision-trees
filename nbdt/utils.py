@@ -32,6 +32,7 @@ DATASETS = (
     "WFUndefendedOW",
     "WFSpringOW",
     "WFSubpages24",
+    "WFUndefendedSub",
 )
 DATASET_TO_NUM_CLASSES = {
     "CIFAR10": 10,
@@ -43,6 +44,7 @@ DATASET_TO_NUM_CLASSES = {
     "LookIntoPerson": 20,
     "ADE20K": 150,
     "WFUndefended": 50,
+    "WFUndefendedSub": 500,
     "WFSpring": 50,
     "WFUndefendedOW": 51,
     "WFSpringOW": 51,

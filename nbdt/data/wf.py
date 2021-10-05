@@ -22,18 +22,20 @@ class NoneTransform(object):
 
 
 class Pylls(data.Dataset):
-    def __init__(self, root="./data", *args, train=True, download=False, **kwargs):
+    def __init__(self, root="./data", *args, train=True, download=False, subpage_as_label=False, **kwargs):
         super().__init__()
 
         if train:
             dataset, labels, classes, ids = load_dataset(
                     join(root, 'mon'), join(root, 'unmon'), join(root, 'classes.list'), 
-                    samples = list(range(0,18)), unm_partition = 0, mode='tr',
+                    samples = list(range(0,18)), unm_partition = 0, mode='tr', 
+                    subpage_as_label=subpage_as_label,
                     **kwargs)
         else:
             dataset, labels, classes, ids = load_dataset(
                     join(root, 'mon'), join(root, 'unmon'), join(root, 'classes.list'), 
                     samples = list(range(18,20)), unm_partition = 9000, mode='te',
+                    subpage_as_label=subpage_as_label,
                     **kwargs)
         self.classes = classes
         self.ids = ids
@@ -286,6 +288,12 @@ class WFUndefended(Pylls):
     def __init__(self, root, *args, **kwargs):
         super().__init__(join(root, 'wf-undefended'), *args, 
                 length=7000, **kwargs)
+
+
+class WFUndefendedSub(Pylls):
+    def __init__(self, root, *args, **kwargs):
+        super().__init__(join(root, 'wf-undefended'), *args, 
+                length=7000, subpage_as_label=True, **kwargs)
 
 
 class WFUndefendedOW(Pylls):

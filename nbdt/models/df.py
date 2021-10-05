@@ -23,6 +23,10 @@ model_urls = {
     ): 'https://github.com/notem/nbdt-temp/blob/main/ckpt-Pylls-DFNet.pth',
     (
         "DFNet",
+        "WFUndefendedSub",
+    ): 'https://github.com/notem/nbdt-temp/blob/main/ckpt-Pylls-DFNet.pth',
+    (
+        "DFNet",
         "WFUndefendedOW",
     ): 'https://github.com/notem/nbdt-temp/blob/main/ckpt-WFUndefendedOW-DFNet.pth',
     (
@@ -112,11 +116,14 @@ class _DFNet(nn.Module):
 
 
 def DFNet(pretrained=False, progress=True, dataset="WFUndefended", **kwargs):
-    sizes = {'WFUndefended': 7000, 
+    sizes = {
+            'WFUndefended': 7000, 
+            'WFUndefendedSub': 7000, 
             'WFUndefendedOW': 7000, 
             'WFSpring': 9000, 
             'WFSpringOW': 9000, 
-            'WFSubpages24': 5000}
+            'WFSubpages24': 5000
+            }
     print(dataset)
     model = _DFNet(input_size=sizes.get(dataset, 7000), **kwargs)
     model = get_pretrained_model(
